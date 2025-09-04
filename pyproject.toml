@@ -1,0 +1,12 @@
+[project]
+name = "github-events-poller"
+version = "0.1.0"
+description = "GitHub events poller with an API that provides various metrics to user."
+authors = [{name = "Tomáš Macko", email = "tomik.macko@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.116.1",
+    "pre-commit>=4.3.0",
+    "pytest>=8.4.2",
+]
