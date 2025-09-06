@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import AnyHttpUrl, BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -40,7 +40,7 @@ class GitHubApiParams(BaseModel):
 
 
 class GitHubApiConfig(BaseSettings):
-    url: str = "https://api.github.com/events"
+    url: AnyHttpUrl = AnyHttpUrl("https://api.github.com/events")
     headers: GitHubApiHeaders = GitHubApiHeaders()
     params: GitHubApiParams = GitHubApiParams()
     rate_limit_base: int = 60

@@ -1,11 +1,13 @@
 import asyncio
 from datetime import datetime, timezone
+import re
 import httpx
+from pydantic import AnyHttpUrl
 
 from events_poller.logger import logger
 from events_poller.models.enum import EventTypeEnum
-from events_poller.models.models import EventModel
-from events_poller.settings import GitHubApiConfig
+from events_poller.models.models import EventModel, ResponseMetaModel
+from events_poller.settings import GitHubApiConfig, GitHubApiParams
 
 
 class GitHubApiPoller:
@@ -46,6 +48,15 @@ class GitHubApiPoller:
 
         return 0
 
+    def _parse_pagination_link(self, headers: httpx.Headers) -> AnyHttpUrl | None:
+        pattern = r'rel="next", <(.*)>;'
+        link_header = headers.get("link", "")
+
+        if link_candidates := re.search(pattern, link_header):
+            pagination_link = link_candidates.group(1)
+            logger.info("Link to next page found", pagination_link=pagination_link)
+            return pagination_link
+
     def _parse_response(self, response: httpx.Response) -> list[EventModel]:
         events = response.json()
         return [
@@ -62,12 +73,15 @@ class GitHubApiPoller:
             if e["type"] in EventTypeEnum
         ]
 
-    async def _fetch_data(self) -> tuple[list[EventModel], int]:
+    async def _fetch_data(
+        self, url: AnyHttpUrl, params: GitHubApiParams | None = None
+    ) -> ResponseMetaModel:
         try:
+            logger.info("Trying to fetch data from GitHubApi", url=str(url))
             res = await self._aclient.get(
-                self._config.url,
+                str(url),
                 headers=self._config.headers.model_dump(),
-                params=self._config.params.model_dump(),
+                params=params.model_dump() if params else params,
             )
             res.raise_for_status()
         except httpx.HTTPStatusError:
@@ -78,15 +92,37 @@ class GitHubApiPoller:
         )
 
         data = self._parse_response(res)
-        sleep = max(self._config.rate_limit_base, self._calculate_sleep(res.headers))
-        return data, sleep
+        rate_limit = self._calculate_sleep(res.headers)
+        sleep = max(self._config.rate_limit_base, rate_limit)
+        pagination_link = self._parse_pagination_link(res.headers)
+
+        return ResponseMetaModel(
+            data=data,
+            sleep=sleep,
+            rate_limited=rate_limit != 0,
+            pagination_link=pagination_link,
+        )
 
     async def run(self) -> None:
         try:
+            # default values for the very first iteration
+            url = self._config.url
+            params = self._config.params
+
             while True:
-                data, sleep = await self._fetch_data()
-                await self._queue.put(data)
-                logger.info("poller is going to sleep", sleep=sleep)
-                await asyncio.sleep(sleep)
+                response_meta = await self._fetch_data(url, params)
+                await self._queue.put(response_meta.data)
+
+                # If we are forced to wait, or we fetched the full response available
+                if response_meta.rate_limited or not response_meta.pagination_link:
+                    logger.info("poller is going to sleep", sleep=response_meta.sleep)
+                    url = self._config.url
+                    params = self._config.params
+                    await asyncio.sleep(response_meta.sleep)
+                else:
+                    logger.info("poller is skipping the sleep")
+                    url = response_meta.pagination_link
+                    params = None
+
         except Exception:
             logger.exception("poller.died")

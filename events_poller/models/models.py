@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict
 
 from events_poller.models.enum import EventTypeEnum
 
@@ -14,3 +14,10 @@ class EventModel(BaseModel):
     action: str
 
     model_config = ConfigDict(use_enum_values=True)
+
+
+class ResponseMetaModel(BaseModel):
+    data: list[EventModel]
+    sleep: int
+    rate_limited: bool = False
+    pagination_link: AnyHttpUrl | None = None
