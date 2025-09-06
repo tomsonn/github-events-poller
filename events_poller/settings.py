@@ -31,4 +31,21 @@ class PollerConfig(BaseSettings):
     model_config = SettingsConfigDict(settings_model_config, env_prefix="POLLER_")
 
 
+class GitHubApiHeaders(BaseModel):
+    accept: str = "application/vnd.github+json"
+
+
+class GitHubApiParams(BaseModel):
+    per_page: int = 100
+
+
+class GitHubApiConfig(BaseSettings):
+    url: str = "https://api.github.com/events"
+    headers: GitHubApiHeaders = GitHubApiHeaders()
+    params: GitHubApiParams = GitHubApiParams()
+    rate_limit: int = 60
+
+    model_config = SettingsConfigDict(settings_model_config, env_prefix="GH_")
+
+
 poller_config = PollerConfig()

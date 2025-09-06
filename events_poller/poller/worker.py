@@ -1,23 +1,28 @@
-from asyncio import Queue
+import asyncio
 from events_poller.controllers.database import DatabaseController
 from events_poller.database.engine import Database
 from events_poller.logger import logger
 from events_poller.models.models import EventModel
-from events_poller.settings import DatabaseConfig
 
 
 class DataInsertedMismatch(Exception): ...
 
 
 class DBWorker:
-    def __init__(self, name: str, queue: Queue, db_config: DatabaseConfig) -> None:
-        self._database = Database(db_config)
-        self._controller = DatabaseController(self._database)
+    def __init__(
+        self,
+        database: Database,
+        controller: DatabaseController,
+        name: str,
+        queue: asyncio.Queue,
+    ) -> None:
+        self._database = database
+        self._controller = controller
 
         self._name = name
         self._queue = queue
 
-    async def work(self):
+    async def work(self) -> None:
         try:
             while True:
                 data_to_process: list[EventModel] = await self._queue.get()
@@ -37,9 +42,8 @@ class DBWorker:
                         "queue_task.error", worker_name=self._name, error=str(e)
                     )
                 finally:
-                    await self._queue.task_done()
+                    self._queue.task_done()
                     logger.info("queue_task.done")
 
         except Exception as e:
             logger.exception("worker.died", worker_name=self._name, error=str(e))
-            await self._database.close_connection()
