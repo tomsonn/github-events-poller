@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import (
 
 import asyncpg
 
+from events_poller.logger import logger
 from events_poller.settings import DatabaseConfig
 
 
@@ -46,3 +47,7 @@ class Database:
             except Exception:
                 await session.rollback()
                 raise
+
+    async def close_connection(self) -> None:
+        await self._engine.dispose()
+        logger.info("All connections closed successfuly.")

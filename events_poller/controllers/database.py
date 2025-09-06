@@ -77,7 +77,7 @@ class DatabaseController:
         async with self._database.get_session() as session:
             res = (await session.execute(statement)).all()
             logger.info(
-                "database_controller.get_events_grouped_by_type",
+                "database_controller.get_events_grouped_by_type.successful",
                 grouped_events=res,
                 repository_name=repository_name,
                 offset=offset,
