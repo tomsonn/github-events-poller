@@ -16,8 +16,21 @@ class EventModel(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
 
-class ResponseMetaModel(BaseModel):
+class GitHubApiResponseMetaModel(BaseModel):
     data: list[EventModel]
     sleep: int
     rate_limited: bool = False
     pagination_link: AnyHttpUrl | None = None
+
+
+class MetricBaseRequest(BaseModel):
+    repository_name: str | None = None
+    action: str | None = None
+
+
+class EventAvgTimeMetricRequest(MetricBaseRequest):
+    event_type: EventTypeEnum = EventTypeEnum.PR_EVENT
+
+
+class TotalEventsMetricRequest(MetricBaseRequest):
+    offset: int
