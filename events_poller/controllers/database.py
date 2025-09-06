@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Literal
 
 from sqlalchemy.sql.expression import func, select
+from sqlalchemy.dialects.postgresql import insert
 from events_poller.database.engine import Database
 from events_poller.database.models import Events
 from events_poller.logger import logger
@@ -15,22 +16,22 @@ class DatabaseController:
         self._database = database
 
     async def insert_data(self, data: EventModel) -> None:
-        data_orm = Events(**data.model_dump())
+        statement = insert(Events).values(data.model_dump())
+        statement = statement.on_conflict_do_nothing(index_elements=["event_id"])
         async with self._database.get_session(commit=True) as session:
-            session.add(data_orm)
+            await session.execute(statement)
             logger.info("database_controller.insert_data.successful")
 
     async def insert_data_bulk(self, data_bulk: list[EventModel]) -> int:
-        data_bulk_orm = [Events(**data.model_dump()) for data in data_bulk]
-        data_bulk_orm_count = len(data_bulk_orm)
+        statement = insert(Events).values([data.model_dump() for data in data_bulk])
+        statement = statement.on_conflict_do_nothing(
+            index_elements=[Events.event_id]
+        ).returning(Events.event_id)
         async with self._database.get_session(commit=True) as session:
-            session.add_all(data_bulk_orm)
-            logger.info(
-                "database_controller.insert_data_bulk.successful",
-                data_count=data_bulk_orm_count,
-            )
+            ret = await session.execute(statement)
+            logger.info("database_controller.insert_data_bulk.successful")
 
-        return data_bulk_orm_count
+        return len(ret.fetchall())
 
     async def get_events_by_type(
         self,

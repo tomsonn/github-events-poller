@@ -15,7 +15,7 @@ class Events(Base):
     __tablename__ = "events"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    event_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    event_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True)
     event_type: Mapped[EventTypeEnum] = mapped_column(
         SAEnum(EventTypeEnum), nullable=False, index=True
     )

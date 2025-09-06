@@ -33,8 +33,9 @@ class DBWorker:
                         data_to_process
                     )
                     if len(data_to_process) != data_inserted_count:
-                        raise DataInsertedMismatch(
-                            "Number of queued data and stored data doesn't match."
+                        logger.warning(
+                            "Number of queued data and stored data doesn't match. Most probably some duplicates were found",
+                            diff=len(data_to_process) - data_inserted_count,
                         )
                     logger.info("queue_task.successful", worker_name=self._name)
                 except Exception as e:
