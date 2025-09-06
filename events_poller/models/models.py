@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from events_poller.models.enum import EventTypeEnum
 
@@ -12,3 +12,5 @@ class EventModel(BaseModel):
     repository_name: str
     created_at: datetime
     action: str
+
+    model_config = ConfigDict(use_enum_values=True)
