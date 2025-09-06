@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -33,6 +34,7 @@ class Database:
             database=self._db_config.database,
         )
 
+    @asynccontextmanager
     async def get_session(
         self, commit: bool = True
     ) -> AsyncGenerator[AsyncSession, None]:
@@ -40,7 +42,7 @@ class Database:
             try:
                 yield session
                 if commit:
-                    session.commit()
+                    await session.commit()
             except Exception:
-                session.rollback()
+                await session.rollback()
                 raise
