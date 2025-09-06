@@ -14,7 +14,7 @@ class DatabaseConfig(BaseSettings):
     password: str
     database: str
 
-    pool_config: DatabasePoolConfig
+    pool_config: DatabasePoolConfig = DatabasePoolConfig()
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore", env_prefix="DB_"
