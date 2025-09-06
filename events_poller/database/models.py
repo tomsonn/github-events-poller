@@ -2,6 +2,7 @@ from datetime import datetime
 from sqlalchemy import BigInteger, DateTime, String
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.sql.functions import now
 
 from events_poller.models.enum import EventTypeEnum
 
@@ -25,3 +26,6 @@ class Events(Base):
         DateTime(timezone=False), nullable=False
     )
     action: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    inserted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), nullable=False, server_default=now()
+    )
