@@ -36,7 +36,7 @@ class Database:
 
     @asynccontextmanager
     async def get_session(
-        self, commit: bool = True
+        self, commit: bool = False
     ) -> AsyncGenerator[AsyncSession, None]:
         async with self._session() as session:
             try:

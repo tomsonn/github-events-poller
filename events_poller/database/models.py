@@ -18,3 +18,4 @@ class Events(Base):
     repository_id: Mapped[int]
     repository_name: Mapped[str]
     created_at: Mapped[datetime]
+    action: Mapped[str]
