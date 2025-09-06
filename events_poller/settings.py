@@ -2,6 +2,11 @@ from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+settings_model_config = SettingsConfigDict(
+    env_file=".env", env_file_encoding="utf-8", extra="ignore"
+)
+
+
 class DatabasePoolConfig(BaseModel):
     pool_pre_ping: bool = True
     pool_recycle: int = 600
@@ -16,6 +21,31 @@ class DatabaseConfig(BaseSettings):
 
     pool_config: DatabasePoolConfig = DatabasePoolConfig()
 
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore", env_prefix="DB_"
-    )
+    model_config = SettingsConfigDict(settings_model_config, env_prefix="DB_")
+
+
+class PollerConfig(BaseSettings):
+    queue_size: int = 1000
+    workers_count: int = 2
+
+    model_config = SettingsConfigDict(settings_model_config, env_prefix="POLLER_")
+
+
+class GitHubApiHeaders(BaseModel):
+    accept: str = "application/vnd.github+json"
+
+
+class GitHubApiParams(BaseModel):
+    per_page: int = 100
+
+
+class GitHubApiConfig(BaseSettings):
+    url: str = "https://api.github.com/events"
+    headers: GitHubApiHeaders = GitHubApiHeaders()
+    params: GitHubApiParams = GitHubApiParams()
+    rate_limit: int = 60
+
+    model_config = SettingsConfigDict(settings_model_config, env_prefix="GH_")
+
+
+poller_config = PollerConfig()
