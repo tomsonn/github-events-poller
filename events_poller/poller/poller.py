@@ -6,7 +6,7 @@ from pydantic import AnyHttpUrl
 
 from events_poller.logger import logger
 from events_poller.models.enum import EventTypeEnum
-from events_poller.models.models import EventModel, ResponseMetaModel
+from events_poller.models.models import EventModel, GitHubApiResponseMetaModel
 from events_poller.settings import GitHubApiConfig, GitHubApiParams
 
 
@@ -43,7 +43,7 @@ class GitHubApiPoller:
             rate_limit_reset_datetime = datetime.fromtimestamp(
                 int(rate_limit_reset), tz=timezone.utc
             )
-            delta_time = datetime.now(timezone.utc) - rate_limit_reset_datetime
+            delta_time = rate_limit_reset_datetime - datetime.now(timezone.utc)
             return int(delta_time.total_seconds())
 
         return 0
@@ -66,7 +66,9 @@ class GitHubApiPoller:
                 actor_id=e["actor"]["id"],
                 repository_id=e["repo"]["id"],
                 repository_name=e["repo"]["name"],
-                created_at=datetime.strptime(e["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
+                created_at=datetime.fromisoformat(
+                    e["created_at"].replace("Z", "+00:00")
+                ),
                 action=e["payload"]["action"],
             )
             for e in events
@@ -75,7 +77,7 @@ class GitHubApiPoller:
 
     async def _fetch_data(
         self, url: AnyHttpUrl, params: GitHubApiParams | None = None
-    ) -> ResponseMetaModel:
+    ) -> GitHubApiResponseMetaModel:
         try:
             logger.info("Trying to fetch data from GitHubApi", url=str(url))
             res = await self._aclient.get(
@@ -85,18 +87,21 @@ class GitHubApiPoller:
             )
             res.raise_for_status()
         except httpx.HTTPStatusError:
-            logger.exception("Http error from server", status_code=res.status_code)
+            logger.warning("Http error from server", status_code=res.status_code)
 
         logger.info(
             "Data fetched successfuly from the GitHubApi", status_code=res.status_code
         )
 
-        data = self._parse_response(res)
+        data = []
+        if httpx.codes.is_success(res.status_code):
+            data = self._parse_response(res)
+
         rate_limit = self._calculate_sleep(res.headers)
         sleep = max(self._config.rate_limit_base, rate_limit)
         pagination_link = self._parse_pagination_link(res.headers)
 
-        return ResponseMetaModel(
+        return GitHubApiResponseMetaModel(
             data=data,
             sleep=sleep,
             rate_limited=rate_limit != 0,
@@ -111,7 +116,10 @@ class GitHubApiPoller:
 
             while True:
                 response_meta = await self._fetch_data(url, params)
-                await self._queue.put(response_meta.data)
+                if response_meta.data:
+                    await self._queue.put(response_meta.data)
+                else:
+                    logger.warning("No data fetched from the GitHubApi")
 
                 # If we are forced to wait, or we fetched the full response available
                 if response_meta.rate_limited or not response_meta.pagination_link:

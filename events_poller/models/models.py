@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import AnyHttpUrl, BaseModel, ConfigDict
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, PositiveInt
 
 from events_poller.models.enum import EventTypeEnum
 
@@ -16,8 +16,52 @@ class EventModel(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
 
-class ResponseMetaModel(BaseModel):
+class GitHubApiResponseMetaModel(BaseModel):
     data: list[EventModel]
     sleep: int
     rate_limited: bool = False
     pagination_link: AnyHttpUrl | None = None
+
+
+class MetricBaseRequest(BaseModel):
+    repository_name: str | None = None
+    action: str | None = None
+
+
+class EventAvgTimeMetricRequest(MetricBaseRequest):
+    event_type: EventTypeEnum = EventTypeEnum.PR_EVENT
+
+
+class TotalEventsMetricRequest(MetricBaseRequest):
+    offset: PositiveInt
+
+
+class RepositoriesWithMultipleEventsRequest(BaseModel):
+    event_type: EventTypeEnum
+    minimal_events_count: int = 2
+
+
+class MetricBaseResponse(BaseModel):
+    oldest_event_time: datetime
+    repository_name: str = "all"
+
+
+class EventAvgTimeMetricResponse(MetricBaseResponse):
+    events_count: int
+    avg_time: float
+
+
+class GroupedEventsCountModel(BaseModel):
+    pr_event: int
+    watch_event: int
+    issue_event: int
+    total: int
+
+
+class TotalEventsMetricResponse(MetricBaseResponse):
+    events_count: GroupedEventsCountModel
+
+
+class RepositoriesWithMultipleEventsResponse(BaseModel):
+    event_type: EventTypeEnum
+    repositories: dict[str, int]
