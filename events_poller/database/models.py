@@ -23,9 +23,9 @@ class Events(Base):
     repository_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     repository_name: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=False), nullable=False
+        DateTime(timezone=True), nullable=False
     )
     action: Mapped[str] = mapped_column(String, nullable=False, index=True)
     inserted_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=False), nullable=False, server_default=now()
+        DateTime(timezone=True), nullable=False, server_default=now()
     )

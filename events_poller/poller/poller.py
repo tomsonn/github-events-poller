@@ -66,7 +66,9 @@ class GitHubApiPoller:
                 actor_id=e["actor"]["id"],
                 repository_id=e["repo"]["id"],
                 repository_name=e["repo"]["name"],
-                created_at=datetime.strptime(e["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
+                created_at=datetime.fromisoformat(
+                    e["created_at"].replace("Z", "+00:00")
+                ),
                 action=e["payload"]["action"],
             )
             for e in events
