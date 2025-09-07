@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from datetime import datetime, timedelta
-from typing import Literal
 
 from sqlalchemy.sql.expression import func, select
 from sqlalchemy.dialects.postgresql import insert
@@ -37,13 +36,13 @@ class DatabaseController:
         self,
         event_type: EventTypeEnum,
         repository_name: str | None = None,
-        action: Literal["opened", "closed"] | None = None,
+        action: str | None = None,
     ) -> Sequence[Events]:
         filters = [Events.event_type == event_type]
         if repository_name:
             filters.append(Events.repository_name == repository_name.lower())
         if action:
-            filters.append(Events.action == action)
+            filters.append(Events.action == action.lower())
 
         statement = select(Events).where(*filters)
         async with self._database.get_session(commit=False) as session:
@@ -62,13 +61,13 @@ class DatabaseController:
         self,
         offset: int,
         repository_name: str | None = None,
-        action: Literal["opened", "closed"] | None = None,
+        action: str | None = None,
     ):
         filters = [Events.created_at >= datetime.now() - timedelta(seconds=offset)]
         if repository_name:
             filters.append(Events.repository_name == repository_name.lower())
         if action:
-            filters.append(Events.action == action)
+            filters.append(Events.action == action.lower())
 
         statement = (
             select(Events.event_type, func.count())

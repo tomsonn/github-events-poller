@@ -34,3 +34,24 @@ class EventAvgTimeMetricRequest(MetricBaseRequest):
 
 class TotalEventsMetricRequest(MetricBaseRequest):
     offset: int
+
+
+class MetricBaseResponse(BaseModel):
+    oldest_event_time: datetime
+    repository_name: str = "all"
+
+
+class EventAvgTimeMetricResponse(MetricBaseResponse):
+    events_count: int
+    avg_time: float
+
+
+class GroupedEventsCountModel(BaseModel):
+    pr_event: int
+    watch_event: int
+    issue_event: int
+    total: int
+
+
+class TotalEventsMetricResponse(MetricBaseResponse):
+    events_count: GroupedEventsCountModel
