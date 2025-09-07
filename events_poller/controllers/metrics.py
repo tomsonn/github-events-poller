@@ -4,9 +4,15 @@ from fastapi import Depends, Request
 from events_poller.database.models import Events
 from events_poller.logger import logger
 from events_poller.controllers.database import DatabaseController
+from events_poller.models.enum import EventTypeEnum
 from events_poller.models.models import (
     EventAvgTimeMetricRequest,
     EventAvgTimeMetricResponse,
+    GroupedEventsCountModel,
+    RepositoriesWithMultipleEventsRequest,
+    RepositoriesWithMultipleEventsResponse,
+    TotalEventsMetricRequest,
+    TotalEventsMetricResponse,
 )
 
 
@@ -53,6 +59,53 @@ class MetricsController:
             repository_name=params.repository_name or "all",
             events_count=len(events_sorted),
             avg_time=round(self._calculate_avg_time(events_sorted), 2),
+        )
+
+    @staticmethod
+    def get_event_count_by_type(
+        event_type: EventTypeEnum, events_grouped: list[tuple[EventTypeEnum, int]]
+    ) -> int:
+        event_by_type = [e for e in events_grouped if e[0] == event_type]
+        return event_by_type[0][1] if event_by_type else 0
+
+    async def get_events_total_count(
+        self, params: TotalEventsMetricRequest
+    ) -> TotalEventsMetricResponse:
+        events_grouped = await self._db_controller.get_events_grouped_by_type(
+            **params.model_dump()
+        )
+
+        # I'm awate, that this method doesn't have to return correct value in 100% of cases,
+        # if poller is running
+        oldest_event = await self._db_controller.get_oldest_event(params.offset)
+        return TotalEventsMetricResponse(
+            oldest_event_time=oldest_event.created_at,
+            repository_name=params.repository_name or "all",
+            events_count=GroupedEventsCountModel(
+                pr_event=self.get_event_count_by_type(
+                    EventTypeEnum.PR_EVENT, events_grouped
+                ),
+                watch_event=self.get_event_count_by_type(
+                    EventTypeEnum.WATCH_EVENT, events_grouped
+                ),
+                issue_event=self.get_event_count_by_type(
+                    EventTypeEnum.ISSUES_EVENT, events_grouped
+                ),
+                total=sum(e[1] for e in events_grouped),
+            ),
+        )
+
+    async def get_repositories_with_multiple_events(
+        self, params: RepositoriesWithMultipleEventsRequest
+    ) -> RepositoriesWithMultipleEventsResponse:
+        repositories_grouped = (
+            await self._db_controller.get_repositories_grouped_by_event_type(
+                **params.model_dump()
+            )
+        )
+        return RepositoriesWithMultipleEventsResponse(
+            event_type=params.event_type,
+            repositories={r[0]: r[1] for r in repositories_grouped},
         )
 
 

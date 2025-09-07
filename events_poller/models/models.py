@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import AnyHttpUrl, BaseModel, ConfigDict
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, PositiveInt
 
 from events_poller.models.enum import EventTypeEnum
 
@@ -33,7 +33,12 @@ class EventAvgTimeMetricRequest(MetricBaseRequest):
 
 
 class TotalEventsMetricRequest(MetricBaseRequest):
-    offset: int
+    offset: PositiveInt
+
+
+class RepositoriesWithMultipleEventsRequest(BaseModel):
+    event_type: EventTypeEnum
+    minimal_events_count: int = 2
 
 
 class MetricBaseResponse(BaseModel):
@@ -55,3 +60,8 @@ class GroupedEventsCountModel(BaseModel):
 
 class TotalEventsMetricResponse(MetricBaseResponse):
     events_count: GroupedEventsCountModel
+
+
+class RepositoriesWithMultipleEventsResponse(BaseModel):
+    event_type: EventTypeEnum
+    repositories: dict[str, int]
