@@ -33,6 +33,9 @@ PASSWORD = os.getenv("DB_PASSWORD")
 HOST = os.getenv("DB_HOST")
 DATABASE = os.getenv("DB_DATABASE")
 
+if os.getenv("USE_TEST_DB"):
+    DATABASE = f"{DATABASE}_test"
+
 DNS_URL = f"postgresql://{USER}:{PASSWORD}@{HOST}/{DATABASE}"
 
 
