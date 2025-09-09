@@ -32,6 +32,10 @@ class EventAvgTimeMetricRequest(MetricBaseRequest):
     event_type: EventTypeEnum = EventTypeEnum.PR_EVENT
 
 
+class EventAvgTimeVisualizeRequest(MetricBaseRequest):
+    event_type: EventTypeEnum | None = None
+
+
 class TotalEventsMetricRequest(MetricBaseRequest):
     offset: PositiveInt
 
@@ -42,7 +46,7 @@ class RepositoriesWithMultipleEventsRequest(BaseModel):
 
 
 class MetricBaseResponse(BaseModel):
-    oldest_event_time: datetime
+    oldest_event_time: datetime | None = None
     repository_name: str = "all"
 
 
