@@ -23,13 +23,10 @@ class MetricsController:
     def __init__(self, db_controller: DatabaseController) -> None:
         self._db_controller = db_controller
 
-    @staticmethod
-    def _calculate_avg_time(events: list[Events]) -> float:
+    def _calculate_avg_time(self, events: list[Events]) -> float:
         # Sum of the difference between two adjacent sorted events
-        total_time_diff = 0
-        for idx in range(len(events) - 1):
-            diff = (events[idx + 1].created_at - events[idx].created_at).total_seconds()
-            total_time_diff += diff
+        time_diff_per_pair = self.get_time_diff_per_event_pair(events)
+        total_time_diff = sum(time_diff_per_pair)
 
         avg_time = total_time_diff / (len(events) - 1)
         logger.info(
@@ -40,12 +37,23 @@ class MetricsController:
         )
         return avg_time
 
+    @staticmethod
+    def get_time_diff_per_event_pair(events: list[Events]) -> list[float]:
+        return [
+            (events[idx + 1].created_at - events[idx].created_at).total_seconds()
+            for idx in range(len(events) - 1)
+        ]
+
+    async def get_events_sorted_by_time(
+        self, params: EventAvgTimeMetricRequest
+    ) -> list[Events]:
+        events = await self._db_controller.get_events_by_type(**params.model_dump())
+        return sorted(events, key=lambda x: x.created_at)
+
     async def calculate_event_avg_time(
         self, params: EventAvgTimeMetricRequest
     ) -> EventAvgTimeMetricResponse | None:
-        events = await self._db_controller.get_events_by_type(**params.model_dump())
-        events_sorted = sorted(events, key=lambda x: x.created_at)
-
+        events_sorted = await self.get_events_sorted_by_time(params)
         if not events_sorted:
             logger.warning("No data to calculate metric", **params.model_dump())
             raise CalculationFailedError()
@@ -75,7 +83,7 @@ class MetricsController:
         # if poller is running
         oldest_event = await self._db_controller.get_oldest_event(params.offset)
         return TotalEventsMetricResponse(
-            oldest_event_time=oldest_event.created_at,
+            oldest_event_time=oldest_event.created_at if oldest_event else None,
             repository_name=params.repository_name or "all",
             events_count=GroupedEventsCountModel(
                 pr_event=self.get_event_count_by_type(
@@ -106,7 +114,7 @@ class MetricsController:
 
 
 def get_metrics_controller(request: Request) -> MetricsController:
-    return request.app.state.controller
+    return request.app.state.metrics_controller
 
 
 MetricsControllerDependency = Annotated[

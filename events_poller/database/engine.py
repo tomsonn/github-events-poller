@@ -13,6 +13,9 @@ from events_poller.logger import logger
 from events_poller.settings import DatabaseConfig
 
 
+class DatabaseError(Exception): ...
+
+
 class Database:
     def __init__(self, db_config: DatabaseConfig) -> None:
         self._db_config = db_config
@@ -20,11 +23,15 @@ class Database:
         self._session = async_sessionmaker(self._engine)
 
     def _create_engine(self) -> AsyncEngine:
-        return create_async_engine(
-            "postgresql+asyncpg://",
-            async_creator=self._get_connection,
-            **self._db_config.pool_config.model_dump(),
-        )
+        try:
+            return create_async_engine(
+                "postgresql+asyncpg://",
+                async_creator=self._get_connection,
+                **self._db_config.pool_config.model_dump(),
+            )
+        except Exception as e:
+            logger.exception("database.error", error=str(e))
+            raise DatabaseError()
 
     async def _get_connection(self) -> asyncpg.Connection:
         return await asyncpg.connect(
