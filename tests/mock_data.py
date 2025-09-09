@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, timezone
 from events_poller.models.enum import EventTypeEnum
 from events_poller.models.models import EventModel
 
+DATETIME_NOW = datetime.now(timezone.utc)
+
 
 EVENTS_BULK = [
     EventModel(
@@ -10,7 +12,7 @@ EVENTS_BULK = [
         actor_id=111,
         repository_id=666,
         repository_name="my-repository",
-        created_at=datetime.now(timezone.utc) - timedelta(seconds=10),
+        created_at=DATETIME_NOW - timedelta(seconds=10),
         action="opened",
     ),
     EventModel(
@@ -19,7 +21,7 @@ EVENTS_BULK = [
         actor_id=111,
         repository_id=666,
         repository_name="my-repository",
-        created_at=datetime.now(timezone.utc) - timedelta(seconds=8),
+        created_at=DATETIME_NOW - timedelta(seconds=8),
         action="opened",
     ),
     EventModel(
@@ -28,7 +30,7 @@ EVENTS_BULK = [
         actor_id=111,
         repository_id=666,
         repository_name="my-repository-1",
-        created_at=datetime.now(timezone.utc) - timedelta(seconds=6),
+        created_at=DATETIME_NOW - timedelta(seconds=6),
         action="closed",
     ),
     EventModel(
@@ -37,7 +39,7 @@ EVENTS_BULK = [
         actor_id=111,
         repository_id=666,
         repository_name="my-repository-1",
-        created_at=datetime.now(timezone.utc) - timedelta(minutes=55),
+        created_at=DATETIME_NOW - timedelta(minutes=55),
         action="opened",
     ),
     EventModel(
@@ -46,7 +48,7 @@ EVENTS_BULK = [
         actor_id=111,
         repository_id=666,
         repository_name="my-repository",
-        created_at=datetime.now(timezone.utc) - timedelta(minutes=50),
+        created_at=DATETIME_NOW - timedelta(minutes=50),
         action="closed",
     ),
     EventModel(
@@ -55,7 +57,7 @@ EVENTS_BULK = [
         actor_id=111,
         repository_id=666,
         repository_name="my-repository-1",
-        created_at=datetime.now(timezone.utc) - timedelta(minutes=45),
+        created_at=DATETIME_NOW - timedelta(minutes=45),
         action="opened",
     ),
     EventModel(
@@ -64,7 +66,7 @@ EVENTS_BULK = [
         actor_id=111,
         repository_id=666,
         repository_name="my-repository-2",
-        created_at=datetime.now(timezone.utc) - timedelta(hours=2),
+        created_at=DATETIME_NOW - timedelta(hours=2),
         action="opened",
     ),
 ]

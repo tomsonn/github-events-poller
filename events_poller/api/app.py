@@ -38,7 +38,7 @@ async def calculation_failed_exception_handler(
     request: Request, exc: CalculationFailedError
 ) -> JSONResponse:
     return JSONResponse(
-        status_code=418,
+        status_code=400,
         content={
             "repository_name": request.query_params.get("repository_name") or "all",
             "action": request.query_params.get("action") or "all",
