@@ -40,7 +40,7 @@ class DatabaseController:
     ) -> Sequence[Events]:
         filters = [Events.event_type == event_type]
         if repository_name:
-            filters.append(Events.repository_name == repository_name.lower())
+            filters.append(Events.repository_name == repository_name)
         if action:
             filters.append(Events.action == action.lower())
 
@@ -67,7 +67,7 @@ class DatabaseController:
             Events.created_at >= datetime.now(timezone.utc) - timedelta(seconds=offset)
         ]
         if repository_name:
-            filters.append(Events.repository_name == repository_name.lower())
+            filters.append(Events.repository_name == repository_name)
         if action:
             filters.append(Events.action == action.lower())
 
