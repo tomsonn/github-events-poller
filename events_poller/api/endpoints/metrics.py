@@ -16,7 +16,7 @@ from events_poller.models.models import (
 router = APIRouter()
 
 
-@router.get("/event-avg-time/", response_model=EventAvgTimeMetricResponse)
+@router.get("/event-avg-time", response_model=EventAvgTimeMetricResponse)
 async def get_event_avg_time(
     params: Annotated[EventAvgTimeMetricRequest, Depends()],
     controller: MetricsControllerDependency,

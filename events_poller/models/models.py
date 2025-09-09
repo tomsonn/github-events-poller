@@ -13,7 +13,7 @@ class EventModel(BaseModel):
     created_at: datetime
     action: str
 
-    model_config = ConfigDict(use_enum_values=True)
+    model_config = ConfigDict(use_enum_values=True, from_attributes=True)
 
 
 class GitHubApiResponseMetaModel(BaseModel):

@@ -25,14 +25,10 @@ class MetricsController:
 
     @staticmethod
     def _calculate_avg_time(events: list[Events]) -> float:
-        # Sum of the difference between two adjacent events
+        # Sum of the difference between two adjacent sorted events
         total_time_diff = 0
         for idx in range(len(events) - 1):
             diff = (events[idx + 1].created_at - events[idx].created_at).total_seconds()
-            logger.info(
-                f"diff between event {events[idx + 1].event_id} and {events[idx].event_id}",
-                diff=diff,
-            )
             total_time_diff += diff
 
         avg_time = total_time_diff / (len(events) - 1)
