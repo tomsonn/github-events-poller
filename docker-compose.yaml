@@ -1,6 +1,7 @@
 services:
   poller:
     build: .
+    container_name: poller
     env_file:
       - .env
     environment:
@@ -8,8 +9,10 @@ services:
     depends_on:
       - postgres
     command: bash -c "uv run alembic upgrade head && uv run python -m events_poller.poller.run"
+
   api:
     build: .
+    container_name: api
     env_file:
       - .env
     environment:
@@ -19,8 +22,10 @@ services:
     ports:
       - 8000:8000
     command: "uv run uvicorn events_poller.api.app:app --host 0.0.0.0 --port 8000"
+
   postgres:
     image: postgres:15
+    container_name: postgres
     restart: always
     environment:
       - POSTGRES_USER=postgres
