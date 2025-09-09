@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from events_poller.api.endpoints import metrics, visualization
 from events_poller.controllers.database import DatabaseController
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="GitHub event poller API",
-    description="API serving various metrics related to GitHub events",
+    description="API serving various metrics related to GitHub events with an option to visualize them.",
     lifespan=lifespan,
 )
 
@@ -58,6 +58,12 @@ async def database_connection_exception_handler(
             "error": "Database connection error",
         },
     )
+
+
+# go to docs, when user doesn't specify exact path
+@app.get("/", include_in_schema=False)
+async def root(request: Request) -> RedirectResponse:
+    return RedirectResponse(url=request.app.docs_url, status_code=308)
 
 
 app.include_router(metrics.router, tags=["metrics"], prefix="/metrics")
