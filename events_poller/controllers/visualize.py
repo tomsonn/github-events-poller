@@ -14,6 +14,22 @@ from events_poller.models.models import (
 
 
 class VisualizeController:
+    """
+    Controller responsible for generating interactive visualizations of GitHub event metrics using Plotly.
+
+    This controller acts as a bridge between metric data and visual presentation.
+    It leverages the MetricsController to fetch processed data and renders them into
+    interactive charts such as:
+
+    - Scatter plots with average time between events
+    - Bar charts representing event type distributions
+
+    Methods:
+        - get_graph: Dispatcher method selecting the graph type to generate.
+        - _get_avg_time_graph: Visualizes time differences and averages between events.
+        - _get_total_count_graph: Displays a bar chart of event type counts.
+    """
+
     def __init__(self, metrics_controller: MetricsControllerDependency):
         self._metrics_controller = metrics_controller
         self._colors = ["darkred", "darkkhaki", "darkorange"]
@@ -46,7 +62,7 @@ class VisualizeController:
                 repository_name=params.repository_name,
             )
             time_diff_per_pair = await _get_time_diff_per_event_type(_params)
-            avg_time = sum(time_diff_per_pair) / (len(time_diff_per_pair) - 1)
+            avg_time = round(sum(time_diff_per_pair) / (len(time_diff_per_pair) - 1), 2)
 
             fig.add_trace(
                 go.Scatter(
@@ -57,14 +73,11 @@ class VisualizeController:
                     line=dict(color=_color, width=1, dash="dot"),
                 )
             )
-            fig.add_trace(
-                go.Scatter(
-                    x=[i for i in range(len(time_diff_per_pair) - 1)],
-                    y=[avg_time for _ in range(len(time_diff_per_pair) - 1)],
-                    mode="lines",
-                    name=f"{_event} - avg time",
-                    line=dict(color=_color, width=1, dash="longdash"),
-                )
+            fig.add_hline(
+                y=avg_time,
+                showlegend=True,
+                name=f"{_event} - avg time of {avg_time} seconds",
+                line=dict(color=_color, width=1, dash="longdash"),
             )
 
         fig.update_layout(

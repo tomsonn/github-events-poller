@@ -9,6 +9,8 @@ class DataInsertedMismatch(Exception): ...
 
 
 class DBWorker:
+    """Asynchronous worker responsible for consuming event data from an async queue and storing it in the database."""
+
     def __init__(
         self,
         database: Database,

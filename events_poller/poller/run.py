@@ -9,6 +9,16 @@ from events_poller.settings import DatabaseConfig, GitHubApiConfig, poller_confi
 
 
 async def main() -> None:
+    """
+    Main entry point for the poller application.
+
+    - Initializes a shared database connection pool.
+    - Initializes an async queue where responses are stored
+    - Spawns async DBWorker tasks for consuming a queue and storing GitHub event data to database.
+    - Starts the GitHub API poller as a separate task pushing responses to queue.
+    - All tasks are awaited concurrently via asyncio.gather.
+    """
+
     # Create one database connection pool for all workers, they will acquire from it
     # pass it in the constructor of DBWorker
     db = Database(DatabaseConfig())

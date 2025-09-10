@@ -20,6 +20,24 @@ class CalculationFailedError(Exception): ...
 
 
 class MetricsController:
+    """
+    Controller responsible for retrieving, processing, and calculating GitHub event metrics.
+
+    This class acts as a service layer between the API endpoints and the database layer.
+    It pulls event data from the database via the DatabaseController and computes metrics
+    such as average time between events, total event counts, and repositories with a high
+    number of specific events.
+
+    Methods:
+        - calculate_event_avg_time: Computes the average time between adjacent events.
+        - get_events_total_count: Groups and counts events by type.
+        - get_repositories_with_multiple_events: Finds repositories exceeding a threshold of events.
+        - get_events_sorted_by_time: Helper method to sort events chronologically.
+        - _calculate_avg_time: Calculates average seconds between adjacent events.
+        - get_time_diff_per_event_pair: Returns list of time differences in seconds between event pairs.
+        - get_event_count_by_type: Utility method to get count for a specific event type from a grouped result.
+    """
+
     def __init__(self, db_controller: DatabaseController) -> None:
         self._db_controller = db_controller
 
@@ -79,8 +97,8 @@ class MetricsController:
             **params.model_dump()
         )
 
-        # I'm awate, that this method doesn't have to return correct value in 100% of cases,
-        # if poller is running
+        # Note: This method may not always return perfectly accurate results
+        # if the poller is actively inserting new events during execution.
         oldest_event = await self._db_controller.get_oldest_event(params.offset)
         return TotalEventsMetricResponse(
             oldest_event_time=oldest_event.created_at if oldest_event else None,

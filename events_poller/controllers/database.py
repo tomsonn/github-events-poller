@@ -11,11 +11,30 @@ from events_poller.models.models import EventModel
 
 
 class DatabaseController:
+    """
+    Controller class responsible for interacting with the PostgreSQL database.
+
+    This class encapsulates all database-related operations, such as inserting
+    GitHub event data, querying filtered event records, grouping events by type,
+    and retrieving repository-related statistics.
+
+    Methods:
+        - insert_data: Insert a single event into the database.
+        - insert_data_bulk: Insert multiple events in one operation.
+        - get_events_by_type: Retrieve events of a specific type with optional filters.
+        - get_events_grouped_by_type: Return a count of events grouped by event type.
+        - get_oldest_event: Retrieve the oldest event from the past X seconds.
+        - get_repositories_grouped_by_event_type: Return repositories with a given event type
+          occurring more than a threshold number of times.
+    """
+
     def __init__(self, database: Database) -> None:
         self._database = database
 
     async def insert_data(self, data: EventModel) -> None:
         statement = insert(Events).values(data.model_dump())
+
+        # There is a possibility that poller fetches the same events during multiple iterations. In such case data are skipped
         statement = statement.on_conflict_do_nothing(index_elements=["event_id"])
         async with self._database.get_session(commit=True) as session:
             await session.execute(statement)
@@ -23,6 +42,8 @@ class DatabaseController:
 
     async def insert_data_bulk(self, data_bulk: list[EventModel]) -> int:
         statement = insert(Events).values([data.model_dump() for data in data_bulk])
+
+        # There is a possibility that poller fetches the same events during multiple iterations. In such case data are skipped
         statement = statement.on_conflict_do_nothing(
             index_elements=[Events.event_id]
         ).returning(Events.event_id)
