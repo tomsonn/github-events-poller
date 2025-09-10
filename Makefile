@@ -4,7 +4,7 @@ serve-api:
 serve-poller:
 	uv run python -m events_poller.poller.run
 
-tests:
+test:
 	uv run pytest tests
 
 alembic-up:

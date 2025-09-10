@@ -46,7 +46,7 @@ class VisualizeController:
                 repository_name=params.repository_name,
             )
             time_diff_per_pair = await _get_time_diff_per_event_type(_params)
-            avg_time = sum(time_diff_per_pair) / (len(time_diff_per_pair) - 1)
+            avg_time = round(sum(time_diff_per_pair) / (len(time_diff_per_pair) - 1), 2)
 
             fig.add_trace(
                 go.Scatter(
@@ -57,14 +57,11 @@ class VisualizeController:
                     line=dict(color=_color, width=1, dash="dot"),
                 )
             )
-            fig.add_trace(
-                go.Scatter(
-                    x=[i for i in range(len(time_diff_per_pair) - 1)],
-                    y=[avg_time for _ in range(len(time_diff_per_pair) - 1)],
-                    mode="lines",
-                    name=f"{_event} - avg time",
-                    line=dict(color=_color, width=1, dash="longdash"),
-                )
+            fig.add_hline(
+                y=avg_time,
+                showlegend=True,
+                name=f"{_event} - avg time of {avg_time} seconds",
+                line=dict(color=_color, width=1, dash="longdash"),
             )
 
         fig.update_layout(
