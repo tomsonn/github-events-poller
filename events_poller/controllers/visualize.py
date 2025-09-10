@@ -14,6 +14,22 @@ from events_poller.models.models import (
 
 
 class VisualizeController:
+    """
+    Controller responsible for generating interactive visualizations of GitHub event metrics using Plotly.
+
+    This controller acts as a bridge between metric data and visual presentation.
+    It leverages the MetricsController to fetch processed data and renders them into
+    interactive charts such as:
+
+    - Scatter plots with average time between events
+    - Bar charts representing event type distributions
+
+    Methods:
+        - get_graph: Dispatcher method selecting the graph type to generate.
+        - _get_avg_time_graph: Visualizes time differences and averages between events.
+        - _get_total_count_graph: Displays a bar chart of event type counts.
+    """
+
     def __init__(self, metrics_controller: MetricsControllerDependency):
         self._metrics_controller = metrics_controller
         self._colors = ["darkred", "darkkhaki", "darkorange"]

@@ -11,6 +11,15 @@ from events_poller.settings import GitHubApiConfig, GitHubApiParams
 
 
 class GitHubApiPoller:
+    """
+    Polls GitHub's public Events API asynchronously and handles pagination, rate-limiting, and response parsing.
+
+    - Parses event data into internal models.
+    - Handles GitHub REST API rate limits gracefully.
+    - Puts event data batches into a shared async queue for downstream processing by workers.
+    - Respects pagination using `Link` headers.
+    """
+
     def __init__(self, gh_poller_config: GitHubApiConfig, queue: asyncio.Queue) -> None:
         self._queue = queue
         self._aclient = httpx.AsyncClient()
@@ -85,16 +94,17 @@ class GitHubApiPoller:
                 headers=self._config.headers.model_dump(),
                 params=params.model_dump() if params else params,
             )
+            response_code = res.status_code
             res.raise_for_status()
         except httpx.HTTPStatusError:
-            logger.warning("Http error from server", status_code=res.status_code)
+            logger.warning("Http error from server", status_code=response_code)
 
         logger.info(
-            "Data fetched successfuly from the GitHubApi", status_code=res.status_code
+            "Data fetched successfuly from the GitHubApi", status_code=response_code
         )
 
         data = []
-        if httpx.codes.is_success(res.status_code):
+        if httpx.codes.is_success(response_code):
             data = self._parse_response(res)
 
         rate_limit = self._calculate_sleep(res.headers)

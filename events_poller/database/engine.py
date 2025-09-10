@@ -23,6 +23,7 @@ class Database:
         self._session = async_sessionmaker(self._engine)
 
     def _create_engine(self) -> AsyncEngine:
+        # Create an async engine with connection pool
         try:
             return create_async_engine(
                 "postgresql+asyncpg://",
@@ -34,6 +35,7 @@ class Database:
             raise DatabaseError()
 
     async def _get_connection(self) -> asyncpg.Connection:
+        # Establish a raw asyncpg connection
         return await asyncpg.connect(
             host=self._db_config.host,
             port=self._db_config.port,
@@ -46,6 +48,8 @@ class Database:
     async def get_session(
         self, commit: bool = False
     ) -> AsyncGenerator[AsyncSession, None]:
+        # yield a session from connection pool and commit transaction when `commit == True`
+        # If an exception occurs, rollback to maintain ACID compliance.
         async with self._session() as session:
             try:
                 yield session
@@ -56,5 +60,6 @@ class Database:
                 raise
 
     async def close_connection(self) -> None:
+        # Close all connections in the pool to prevent memory leaks.
         await self._engine.dispose()
         logger.info("All connections closed successfuly.")
