@@ -128,6 +128,11 @@ Execute to Postgres container and create the DB manually:
 $ docker exec -it postgres psql -U postgres -c "CREATE DATABASE events_poller;"
 ```
 
+Install all dependencies:
+```bash
+$ uv sync
+```
+
 Run migrations:
 
 ```bash
